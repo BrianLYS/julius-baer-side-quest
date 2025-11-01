@@ -1,19 +1,22 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Header, HTTPException
-
 from app.models import Account
-from app.schemas import ValidateAccountResponse, BalanceResponse, ErrorResponse
+from app.schemas import BalanceResponse, ErrorResponse, ValidateAccountResponse
 from app.services.store import store
 from app.utils.accounts import validate_account_id
-
+from fastapi import APIRouter, Header, HTTPException
 
 router = APIRouter(tags=["Accounts"])
 
 
 def _classify_account(account_id: str):
     if not validate_account_id(account_id):
-        return {"formatValid": False, "exists": False, "active": False, "invalid": False}
+        return {
+            "formatValid": False,
+            "exists": False,
+            "active": False,
+            "invalid": False,
+        }
     if account_id in store.accounts:
         return {"formatValid": True, "exists": True, "active": True, "invalid": False}
     if account_id in store.inactive_accounts:
@@ -45,13 +48,20 @@ def validate_account(accountId: str, Authorization: Optional[str] = Header(None)
 )
 def get_account_balance(accountId: str, Authorization: Optional[str] = Header(None)):
     if not validate_account_id(accountId):
-        raise HTTPException(status_code=400, detail={
-            "status": "FAILED",
-            "message": "Invalid account format",
-            "errors": ["accountId must match pattern ACC[0-9]{4}"]
-        })
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "status": "FAILED",
+                "message": "Invalid account format",
+                "errors": ["accountId must match pattern ACC[0-9]{4}"],
+            },
+        )
     if accountId in store.inactive_accounts:
-        raise HTTPException(status_code=400, detail={"status": "FAILED", "message": "Account inactive"})
+        raise HTTPException(
+            status_code=400, detail={"status": "FAILED", "message": "Account inactive"}
+        )
     if accountId not in store.accounts:
-        raise HTTPException(status_code=404, detail={"status": "FAILED", "message": "Account not found"})
+        raise HTTPException(
+            status_code=404, detail={"status": "FAILED", "message": "Account not found"}
+        )
     return {"accountId": accountId, "balance": store.accounts[accountId]}

@@ -1,17 +1,21 @@
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Query, Depends
 
-from app.models import AuthRequest
-from app.utils.jwt_utils import jwt_encode
 from app.dependencies.auth import require_claims
+from app.models import AuthRequest
 from app.schemas import AuthTokenResponse, AuthValidateResponse
-
+from app.utils.jwt_utils import jwt_encode
+from fastapi import APIRouter, Depends, Query
 
 router = APIRouter(tags=["Authentication"])
 
 
 @router.post("/authToken", response_model=AuthTokenResponse)
-def get_auth_token(body: AuthRequest, claim: str = Query("enquiry", description="Claim/scope for the token: 'enquiry' or 'transfer'")):
+def get_auth_token(
+    body: AuthRequest,
+    claim: str = Query(
+        "enquiry", description="Claim/scope for the token: 'enquiry' or 'transfer'"
+    ),
+):
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(hours=1)
     payload = {
@@ -32,7 +36,11 @@ def get_auth_token(body: AuthRequest, claim: str = Query("enquiry", description=
 
 @router.post("/auth/validate", response_model=AuthValidateResponse)
 def validate_jwt(claims: dict = Depends(require_claims)):
-    exp = datetime.fromtimestamp(int(claims["exp"]), tz=timezone.utc) if "exp" in claims else None
+    exp = (
+        datetime.fromtimestamp(int(claims["exp"]), tz=timezone.utc)
+        if "exp" in claims
+        else None
+    )
     return {
         "valid": True,
         "username": claims.get("sub"),

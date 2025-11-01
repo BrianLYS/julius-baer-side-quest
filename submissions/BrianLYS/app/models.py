@@ -15,4 +15,3 @@ class AuthRequest(BaseModel):
 class Account(BaseModel):
     id: str
     balance: float
-

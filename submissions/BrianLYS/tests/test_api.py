@@ -1,13 +1,13 @@
-from fastapi.testclient import TestClient
-
 from app.main import app
-
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
 
 def get_token(scope="transfer"):
-    r = client.post(f"/authToken?claim={scope}", json={"username": "alice", "password": "any"})
+    r = client.post(
+        f"/authToken?claim={scope}", json={"username": "alice", "password": "any"}
+    )
     assert r.status_code == 200, r.text
     return r.json()["token"]
 
@@ -38,7 +38,9 @@ def test_auth_and_history():
     assert r.status_code == 200
     assert r.json()["valid"] is True
 
-    r = client.get("/transactions/history", headers={"Authorization": f"Bearer {token}"})
+    r = client.get(
+        "/transactions/history", headers={"Authorization": f"Bearer {token}"}
+    )
     assert r.status_code == 200
     assert "transactions" in r.json()
 

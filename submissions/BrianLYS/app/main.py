@@ -1,17 +1,32 @@
+import logging
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from app.config import settings
 
-from app.services.store import store
-from app.routers import auth as auth_router
 from app.routers import accounts as accounts_router
-from app.routers import transfer as transfer_router
+from app.routers import auth as auth_router
 from app.routers import transactions as transactions_router
-
+from app.routers import transfer as transfer_router
+from app.services.store import store
 
 TAGS_META = [
-    {"name": "Authentication", "description": "JWT token generation and validation endpoints"},
-    {"name": "Accounts", "description": "Account management and validation endpoints - Bonus features"},
-    {"name": "Transfer", "description": "Fund transfer operations - Core challenge endpoint"},
-    {"name": "transaction-controller", "description": "Transaction history endpoint (bonus)"},
+    {
+        "name": "Authentication",
+        "description": "JWT token generation and validation endpoints",
+    },
+    {
+        "name": "Accounts",
+        "description": "Account management and validation endpoints - Bonus features",
+    },
+    {
+        "name": "Transfer",
+        "description": "Fund transfer operations - Core challenge endpoint",
+    },
+    {
+        "name": "transaction-controller",
+        "description": "Transaction history endpoint (bonus)",
+    },
 ]
 
 app = FastAPI(
@@ -30,6 +45,8 @@ app = FastAPI(
 
 @app.on_event("startup")
 def init_state():
+    # Basic logging config
+    logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO))
     store.init_defaults()
 
 
@@ -58,6 +75,24 @@ async def ensure_store_initialized(request: Request, call_next):
         store.init_defaults()
     response = await call_next(request)
     return response
+
+
+# CORS (use CORS_ORIGINS env var; defaults to allow all)
+origins = [o.strip() for o in settings.cors_origins.split(",")] if settings.cors_origins != "*" else ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# Global error handler for unexpected exceptions
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logging.exception("Unhandled error: %s", exc)
+    return JSONResponse(status_code=500, content={"status": "FAILED", "message": "Internal server error"})
 
 
 # Include routers

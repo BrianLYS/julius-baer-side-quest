@@ -13,3 +13,24 @@ dev = [
     "ruff>=0.14.3",
     "pytest>=8.3.3",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle (errors)
+  "W",   # pycodestyle (warnings)
+  "F",   # pyflakes
+  "I",   # isort (import sorting)
+  "B",   # flake8-bugbear
+]
+ignore = [
+  "E203",  # whitespace before ':' (black/ruff formatting compatible)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false

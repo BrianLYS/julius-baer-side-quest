@@ -1,4 +1,5 @@
 from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -56,4 +57,3 @@ class TransactionEntry(BaseModel):
 
 class TransactionsHistoryResponse(BaseModel):
     transactions: List[TransactionEntry]
-

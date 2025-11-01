@@ -5,9 +5,8 @@ import json
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import HTTPException
-
 from app.config import settings
+from fastapi import HTTPException
 
 
 def _b64url(data: bytes) -> str:
@@ -24,7 +23,9 @@ def jwt_encode(payload: dict, secret: Optional[str] = None) -> str:
     header_b64 = _b64url(json.dumps(header, separators=(",", ":")).encode())
     payload_b64 = _b64url(json.dumps(payload, separators=(",", ":")).encode())
     signing_input = f"{header_b64}.{payload_b64}".encode()
-    signature = hmac.new((secret or settings.jwt_secret).encode(), signing_input, hashlib.sha256).digest()
+    signature = hmac.new(
+        (secret or settings.jwt_secret).encode(), signing_input, hashlib.sha256
+    ).digest()
     sig_b64 = _b64url(signature)
     return f"{header_b64}.{payload_b64}.{sig_b64}"
 
@@ -33,23 +34,39 @@ def jwt_decode(token: str, secret: Optional[str] = None) -> dict:
     try:
         header_b64, payload_b64, sig_b64 = token.split(".")
     except ValueError:
-        raise HTTPException(status_code=401, detail={"status": "FAILED", "message": "Invalid token format"})
+        raise HTTPException(
+            status_code=401,
+            detail={"status": "FAILED", "message": "Invalid token format"},
+        )
     signing_input = f"{header_b64}.{payload_b64}".encode()
-    expected_sig = hmac.new((secret or settings.jwt_secret).encode(), signing_input, hashlib.sha256).digest()
+    expected_sig = hmac.new(
+        (secret or settings.jwt_secret).encode(), signing_input, hashlib.sha256
+    ).digest()
     try:
         provided_sig = _b64url_decode(sig_b64)
     except Exception:
-        raise HTTPException(status_code=401, detail={"status": "FAILED", "message": "Invalid token signature"})
+        raise HTTPException(
+            status_code=401,
+            detail={"status": "FAILED", "message": "Invalid token signature"},
+        )
     if not hmac.compare_digest(expected_sig, provided_sig):
-        raise HTTPException(status_code=401, detail={"status": "FAILED", "message": "Signature verification failed"})
+        raise HTTPException(
+            status_code=401,
+            detail={"status": "FAILED", "message": "Signature verification failed"},
+        )
     try:
         payload = json.loads(_b64url_decode(payload_b64))
     except Exception:
-        raise HTTPException(status_code=401, detail={"status": "FAILED", "message": "Invalid token payload"})
+        raise HTTPException(
+            status_code=401,
+            detail={"status": "FAILED", "message": "Invalid token payload"},
+        )
     # Expiry check
     now = int(datetime.now(timezone.utc).timestamp())
     if "exp" in payload and now >= int(payload["exp"]):
-        raise HTTPException(status_code=401, detail={"status": "FAILED", "message": "Token expired"})
+        raise HTTPException(
+            status_code=401, detail={"status": "FAILED", "message": "Token expired"}
+        )
     return payload
 
 
@@ -60,4 +77,3 @@ def bearer_token(auth_header: Optional[str]) -> Optional[str]:
     if len(parts) == 2 and parts[0].lower() == "bearer":
         return parts[1]
     return None
-

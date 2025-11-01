@@ -20,6 +20,8 @@ Optional: set JWT secret used to sign tokens
 
 ```bash
 export JWT_SECRET="change-me"
+export CORS_ORIGINS="http://localhost:3000,http://127.0.0.1:5173" # optional, defaults to *
+export LOG_LEVEL="INFO" # optional
 ```
 
 Or use a local `.env` file:
@@ -36,6 +38,24 @@ set -a; source .env; set +a
 docker build -t fastapi-new .
 # Map standard challenge port 8123 to container port 80
 docker run -p 8123:80 --env-file .env fastapi-new
+```
+
+## Linting & Formatting
+
+```bash
+# Install dev tools once
+uv sync --group dev
+
+# Lint
+uv run ruff check .
+
+# Format
+uv run ruff format .
+
+# Or use Makefile helpers
+make lint
+make format
+make fix
 ```
 
 ## Project Structure
